@@ -1,0 +1,30 @@
+{
+  "name": "default",
+  "cards": [
+    {
+      "id": "dddfbc63-0fae-449f-a29f-6823b038b6e6",
+      "term": "slice",
+      "solution": "dynamic array",
+      "interval": 3,
+      "repetitions": 1,
+      "ease_factor": 2.65,
+      "due_date": "2026-03-28T12:34:56.567069119+01:00",
+      "last_review": "2026-03-25T12:34:56.567069119+01:00",
+      "lapses": 0,
+      "created_at": "2026-03-25T12:34:13.462261665+01:00"
+    },
+    {
+      "id": "1423f3f2-b5c9-4ab8-956e-28aea2e30b5a",
+      "term": "REST API",
+      "solution": "REST API: Representational State Transfer Application Programming Interface; flexible web-interface based on standard HTTP methods (GET, POST, PUT, DELETE) to exchange data between systems",
+      "interval": 1,
+      "repetitions": 1,
+      "ease_factor": 2.5,
+      "due_date": "2026-03-26T12:41:22.160099053+01:00",
+      "last_review": "2026-03-25T12:41:22.160099053+01:00",
+      "lapses": 0,
+      "created_at": "2026-03-25T12:41:08.92066608+01:00"
+    }
+  ],
+  "created_at": "2026-03-25T12:34:13.462258429+01:00"
+}

@@ -12,31 +12,42 @@ import (
 	flashcard "github.com/Alex-Koch-85/memorizer"
 )
 
-var fileName = ".fc.json"
+func getFileName(deck string) string {
+	return strings.ToLower(deck) + ".json"
+}
 
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(),
 			"%s tool. Flashcard training program.\n", os.Args[0])
 		fmt.Fprintf(flag.CommandLine.Output(), "Copyright 2026\n")
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage information:")
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage information:\n")
+		fmt.Fprintf(flag.CommandLine.Output(), "To use the environment variable: 'export MEMORIZER_FILE=name.json'")
 		flag.PrintDefaults()
 	}
 
 	// Parsing command line flags
 	addCard := flag.Bool("addCard", false, "Add a new card")
+	deckName := flag.String("deck", "default", "Deck name")
 	term := flag.String("term", "", "Card term")
 	solution := flag.String("solution", "", "Card solution")
 	review := flag.Bool("review", false, "Start review session")
 	flag.Parse()
 
+	if *deckName == "" {
+		fmt.Fprintln(os.Stderr, "deck name cannot be empty")
+		os.Exit(1)
+	}
+
+	fileName := getFileName(*deckName)
+
 	// Check if the user defined the ENV VAR for a custom file name
-	if os.Getenv("MEMORIZER_FILE") != "" {
-		fileName = os.Getenv("MEMORIZER_FILE")
+	if env := os.Getenv("MEMORIZER_FILE"); env != "" {
+		fileName = env
 	}
 
 	// Use LoadOrCreateDeck helper function to read a Deck from file or create a new one
-	d, err := LoadOrCreateDeck(fileName, "default", time.Now())
+	d, err := LoadOrCreateDeck(fileName, *deckName, time.Now())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -68,10 +79,13 @@ func LoadOrCreateDeck(filename, name string, now time.Time) (*flashcard.Deck, er
 	d, err := flashcard.LoadDeck(filename)
 	if err != nil {
 		if os.IsNotExist(err) {
+			fmt.Printf("No deck found. Creating new deck: %s\n", name)
 			return flashcard.NewDeck(name, now), nil
 		}
 		return nil, err
 	}
+
+	fmt.Printf("Using deck: %s\n", d.Name)
 	return d, nil
 }
 
@@ -95,6 +109,7 @@ func RunReview(d *flashcard.Deck, filename string, now time.Time) {
 	reader := bufio.NewReader(os.Stdin)
 
 	for i, card := range due {
+		fmt.Printf("Deck: %s\n", d.Name)
 		fmt.Printf("\nCard %d/%d\n", i+1, len(due))
 		fmt.Println("Term:", card.Term)
 
