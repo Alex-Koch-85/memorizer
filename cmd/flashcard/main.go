@@ -22,7 +22,7 @@ func main() {
 			"%s tool. Flashcard training program.\n", os.Args[0])
 		fmt.Fprintf(flag.CommandLine.Output(), "Copyright 2026\n")
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage information:\n")
-		fmt.Fprintf(flag.CommandLine.Output(), "To use the environment variable: 'export MEMORIZER_FILE=name.json'")
+		fmt.Fprintf(flag.CommandLine.Output(), "To use the environment variable: 'export MEMORIZER_FILE=name.json'\n")
 		flag.PrintDefaults()
 	}
 
@@ -99,18 +99,26 @@ func SaveOrExit(d *flashcard.Deck, filename string) {
 
 // RunReview function runs the review loop
 func RunReview(d *flashcard.Deck, filename string, now time.Time) {
-	due := d.Due(now)
+	queue := d.Due(now)
 
-	if len(due) == 0 {
+	if len(queue) == 0 {
 		fmt.Println("No cards due")
 		return
 	}
 
 	reader := bufio.NewReader(os.Stdin)
 
-	for i, card := range due {
+	total := 0
+	againCount := 0
+
+	for len(queue) > 0 {
+		card := queue[0]
+		queue = queue[1:]
+
+		total++
+
 		fmt.Printf("Deck: %s\n", d.Name)
-		fmt.Printf("\nCard %d/%d\n", i+1, len(due))
+		fmt.Printf("\n--- Card %d ---\n", total)
 		fmt.Println("Term:", card.Term)
 
 		// wait for Enter
@@ -119,10 +127,16 @@ func RunReview(d *flashcard.Deck, filename string, now time.Time) {
 		fmt.Println("Solution:", card.Solution)
 
 		for {
-			fmt.Print("\n0 Again | 1 Hard | 2 Good | 3 Easy\n> ")
+			fmt.Print("\n0 Again | 1 Hard | 2 Good | 3 Easy | q Quit\n> ")
 
 			input, _ := reader.ReadString('\n')
 			input = strings.TrimSpace(input)
+
+			if input == "q" {
+				fmt.Println("\nSession aborted.")
+				SaveOrExit(d, filename)
+				return
+			}
 
 			rating, err := strconv.Atoi(input)
 			if err != nil || rating < 0 || rating > 3 {
@@ -135,10 +149,19 @@ func RunReview(d *flashcard.Deck, filename string, now time.Time) {
 				continue
 			}
 
+			// if again, card goes back in queue
+			if rating == 0 {
+				queue = append(queue, card)
+				againCount++
+			}
+
 			break
 		}
 	}
 
 	SaveOrExit(d, filename)
+
 	fmt.Println("\nReview session complete.")
+	fmt.Printf("Cards reviewed: %d\n", total)
+	fmt.Printf("Again count: %d\n", againCount)
 }
