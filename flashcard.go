@@ -6,6 +6,8 @@ import (
 	"os"
 	"sort"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -59,21 +61,21 @@ func NewCard(term, solution string, now time.Time) Card {
 }
 
 // NewDeck function generates a new deck (constructor method)
-func NewDeck(name string) *Deck {
+func NewDeck(name string, now time.Time) *Deck {
 	return &Deck{
 		Name: 			name,
 		Cards: 			[]Card{},
-		CreatedAt: 	time.Now(),
+		CreatedAt: 	now,
 	}
 }
 
 // generateID function generates an ID for NewCard function
 func generateID() string {
-	return fmt.Sprintf("%d", time.Now().UnixNano())
+	return uuid.NewString()
 }
 
 // NewCard method adds a card to a Deck
-func (d *Deck) NewCard(term, solution string, now time.Time) *Card {
+func (d *Deck) AddNewCard(term, solution string, now time.Time) *Card {
 	c := NewCard(term, solution, now)
 	d.Cards = append(d.Cards, c)
 	
@@ -102,6 +104,7 @@ func (d *Deck) Due(now time.Time) []*Card {
 		}
 	}
 	
+	// Sort the slice to return the oldest card first
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].DueDate.Before(result[j].DueDate)
 	})
@@ -127,20 +130,20 @@ func (c *Card) Review(rating int, now time.Time) error {
 	}
 	
 	switch rating {
-		// rating: again; Show card again
+		// rating 0: again; Show card again
 	case 0:
 		c.Repetitions = 0
 		c.Interval = 1
 		c.Lapses++
 		c.EaseFactor -= AgainPenalty
 	
-		// rating: hard
+		// rating 1: hard
 	case 1:
 		c.Repetitions++
 		c.Interval = max(1, int(float64(c.Interval)*1.2))
 		c.EaseFactor -= HardPenalty
 
-	// rating: good
+	// rating 2: good
 	case 2:
 		c.Repetitions++
 		if c.Repetitions == 1 {
@@ -151,7 +154,7 @@ func (c *Card) Review(rating int, now time.Time) error {
 			c.Interval = int(float64(c.Interval) * c.EaseFactor)
 		}
 
-	// rating: easy
+	// rating 3: easy
 	case 3:
 		c.Repetitions++
 
