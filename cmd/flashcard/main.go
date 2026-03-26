@@ -106,12 +106,18 @@ func main() {
 
 	// Add a card to a deck
 	if *addCard {
-		if *term == "" || *solution == "" {
-			fmt.Fprintln(os.Stderr, "term and solution required")
-			os.Exit(1)
+		cardTerm := *term
+		cardSolution := *solution
+
+		if cardTerm == "" {
+			cardTerm = PromptInput("Term: ")
 		}
 
-		d.AddNewCard(*term, *solution, time.Now())
+		if cardSolution == "" {
+			cardSolution = PromptInput("Solution: ")
+		}
+
+		d.AddNewCard(cardTerm, cardSolution, time.Now())
 		SaveOrExit(d, fileName)
 
 		fmt.Println("Card added successfully")
@@ -131,12 +137,23 @@ func main() {
 			os.Exit(1)
 		}
 
-		if *term != "" {
-			card.Term = *term
+		newTerm := *term
+		newSolution := *solution
+
+		// interactive only when no flags set for term or solution
+		if newTerm == "" && newSolution == "" {
+			fmt.Printf("Current Term: %s\n", card.Term)
+			newTerm = PromptOptionalInput("New Term (leave empty to keep): ")
+
+			fmt.Printf("\nCurrent Solution: %s\n", card.Solution)
+			newSolution = PromptOptionalInput("New Solution (leave empty to keep): ")
 		}
 
-		if *solution != "" {
-			card.Solution = *solution
+		if newTerm != "" {
+			card.Term = newTerm
+		}
+		if newSolution != "" {
+			card.Solution = newSolution
 		}
 
 		SaveOrExit(d, fileName)
@@ -165,29 +182,6 @@ func main() {
 	if *review {
 		RunReview(d, fileName, time.Now())
 		return
-	}
-}
-
-// Helper function to load or create a deck
-func LoadOrCreateDeck(filename, name string, now time.Time) (*flashcard.Deck, error) {
-	d, err := flashcard.LoadDeck(filename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			fmt.Printf("No deck found. Creating new deck: %s\n", name)
-			return flashcard.NewDeck(name, now), nil
-		}
-		return nil, err
-	}
-
-	fmt.Printf("Using deck: %s\n", d.Name)
-	return d, nil
-}
-
-// Helper function to save a deck or Exit
-func SaveOrExit(d *flashcard.Deck, filename string) {
-	if err := d.Save(filename); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
 	}
 }
 
@@ -258,4 +252,62 @@ func RunReview(d *flashcard.Deck, filename string, now time.Time) {
 	fmt.Println("\nReview session complete.")
 	fmt.Printf("Cards reviewed: %d\n", total)
 	fmt.Printf("Again count: %d\n", againCount)
+}
+
+// Helper function to load or create a deck
+func LoadOrCreateDeck(filename, name string, now time.Time) (*flashcard.Deck, error) {
+	d, err := flashcard.LoadDeck(filename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Printf("No deck found. Creating new deck: %s\n", name)
+			return flashcard.NewDeck(name, now), nil
+		}
+		return nil, err
+	}
+
+	fmt.Printf("Using deck: %s\n", d.Name)
+	return d, nil
+}
+
+// Helper function to save a deck or Exit
+func SaveOrExit(d *flashcard.Deck, filename string) {
+	if err := d.Save(filename); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+// Helper function to get user input for term and solution definitions
+func PromptInput(prompt string) string {
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Print(prompt)
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+
+		input = strings.TrimSpace(input)
+		if input != "" {
+			return input
+		}
+
+		fmt.Println("Input cannot be empty.")
+	}
+}
+
+// Helper function to get user input for editing
+func PromptOptionalInput(prompt string) string {
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Print(prompt)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	return strings.TrimSpace(input)
 }
