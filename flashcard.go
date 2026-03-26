@@ -94,6 +94,29 @@ func (d *Deck) UpdateCard(updated Card) bool {
 	return false
 }
 
+// FindByID method gets the card by ID
+func (d *Deck) FindByID(id string) *Card {
+	for i := range d.Cards {
+		if d.Cards[i].ID == id {
+			return &d.Cards[i]
+		}
+	}
+
+	return nil
+}
+
+// DeleteCardByID method deletes a card by ID
+func (d *Deck) DeleteCardByID(id string) bool {
+	for i := range d.Cards {
+		if d.Cards[i].ID == id {
+			d.Cards = append(d.Cards[:i], d.Cards[i+1:]...)
+			return true
+		}
+	}
+
+	return false
+}
+
 // Due method gets due cards for review
 func (d *Deck) Due(now time.Time) []*Card {
 	var result []*Card
@@ -110,17 +133,6 @@ func (d *Deck) Due(now time.Time) []*Card {
 	})
 
 	return result
-}
-
-// FindByID method gets the card by ID
-func (d *Deck) FindByID(id string) *Card {
-	for i := range d.Cards {
-		if d.Cards[i].ID == id {
-			return &d.Cards[i]
-		}
-	}
-
-	return nil
 }
 
 // Review method implements Anki-lite algorithm for reviewing cards
