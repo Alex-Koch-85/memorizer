@@ -32,7 +32,34 @@ func main() {
 	term := flag.String("term", "", "Card term")
 	solution := flag.String("solution", "", "Card solution")
 	review := flag.Bool("review", false, "Start review session")
+	listCards := flag.Bool("list", false, "List all cards")
+	editCard := flag.Bool("edit", false, "Edit a card by ID")
+	deleteCard := flag.Bool("delete", false, "Delete a card by ID")
+	cardID := flag.String("id", "", "Card ID")
 	flag.Parse()
+
+	// Mode counter to prevent using conflicting flags
+	modeCount := 0
+	if *addCard {
+		modeCount++
+	}
+	if *listCards {
+		modeCount++
+	}
+	if *editCard {
+		modeCount++
+	}
+	if *deleteCard {
+		modeCount++
+	}
+	if *review {
+		modeCount++
+	}
+
+	if modeCount > 1 {
+		fmt.Fprintln(os.Stderr, "please use only onde mode at a time")
+		os.Exit(1)
+	}
 
 	if *deckName == "" {
 		fmt.Fprintln(os.Stderr, "deck name cannot be empty")
@@ -53,6 +80,30 @@ func main() {
 		os.Exit(1)
 	}
 
+	// List all the cards
+	if *listCards {
+		if len(d.Cards) == 0 {
+			fmt.Println("No cards in deck.")
+			return
+		}
+
+		fmt.Printf("Deck: %s\n\n", d.Name)
+
+		for i, c := range d.Cards {
+			fmt.Printf("%d.\n", i+1)
+			fmt.Printf("  ID:				%s\n", c.ID)
+			fmt.Printf("  Term:			%s\n", c.Term)
+			fmt.Printf("  Solution:	%s\n", c.Solution)
+			fmt.Printf("  DueDate:	%s\n", c.DueDate.Format("2006-01-02"))
+			fmt.Printf("  Interval:	%d days\n", c.Interval)
+			fmt.Printf("  Reps:			%d\n", c.Repetitions)
+			fmt.Printf("  Lapses:		%d\n", c.Lapses)
+			fmt.Println()
+		}
+
+		return
+	}
+
 	// Add a card to a deck
 	if *addCard {
 		if *term == "" || *solution == "" {
@@ -64,6 +115,49 @@ func main() {
 		SaveOrExit(d, fileName)
 
 		fmt.Println("Card added successfully")
+		return
+	}
+
+	// Edit edits a card by ID
+	if *editCard {
+		if *cardID == "" {
+			fmt.Fprintln(os.Stderr, "card ID required")
+			os.Exit(1)
+		}
+
+		card := d.FindByID(*cardID)
+		if card == nil {
+			fmt.Fprintln(os.Stderr, "card not found")
+			os.Exit(1)
+		}
+
+		if *term != "" {
+			card.Term = *term
+		}
+
+		if *solution != "" {
+			card.Solution = *solution
+		}
+
+		SaveOrExit(d, fileName)
+		fmt.Println("Card updated successfully")
+		return
+	}
+
+	// Delete a card by ID
+	if *deleteCard {
+		if *cardID == "" {
+			fmt.Fprintln(os.Stderr, "card ID required")
+			os.Exit(1)
+		}
+
+		if !d.DeleteCardByID(*cardID) {
+			fmt.Fprintln(os.Stderr, "card not found")
+			os.Exit(1)
+		}
+
+		SaveOrExit(d, fileName)
+		fmt.Println("Card deleted successfully")
 		return
 	}
 
@@ -117,11 +211,11 @@ func RunReview(d *flashcard.Deck, filename string, now time.Time) {
 
 		total++
 
-		fmt.Printf("Deck: %s\n", d.Name)
 		fmt.Printf("\n--- Card %d ---\n", total)
 		fmt.Println("Term:", card.Term)
 
 		// wait for Enter
+		fmt.Print("(Press enter to show solution)")
 		reader.ReadString('\n')
 
 		fmt.Println("Solution:", card.Solution)
