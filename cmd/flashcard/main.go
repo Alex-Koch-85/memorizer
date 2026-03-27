@@ -19,7 +19,7 @@ func getFileName(deck string) string {
 func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(),
-			"%s tool. Flashcard training program.\n", os.Args[0])
+			"%s tool. Flashcard learning program.\n", os.Args[0])
 		fmt.Fprintf(flag.CommandLine.Output(), "Copyright 2026\n")
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage information:\n")
 		fmt.Fprintf(flag.CommandLine.Output(), "To use the environment variable: 'export MEMORIZER_FILE=name.json'\n")
